@@ -1,60 +1,56 @@
-name: Snyk Open Source (SCA) Scan
+name: Example workflow for Python using Snyk
 
-on:
-  push:
-    branches: ["**"]
-  pull_request:
-    branches: ["**"]
-
-permissions:
-  contents: read
-  security-events: write
-  actions: read
+on: push
 
 jobs:
-  snyk-sca:
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-
+  security:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # Step 1: Checkout the code
+      - uses: actions/checkout@v3
 
+      # Step 2: Set up Python
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: '3.11' # Or your required version
 
+      # Step 3: Install dependencies (if applicable)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Set up Snyk CLI
-        uses: snyk/actions/setup@master
+      # Step 4: Run Snyk test (SCA scan) and output SARIF
+      - name: Run Snyk test for SCA
+        id: snyk-scan
+        uses: snyk/actions/python@master
+        continue-on-error: true # Allow SARIF upload even if test fails
+        env:
+          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
+        with:
+          args: --sarif-file-output=snyk.sarif --severity-threshold=high --fail-on=all
+
+      # Step 5: Push results to Snyk portal
+      - name: Monitor project in Snyk
+        run: snyk monitor --all-projects
         env:
           SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
 
-      - name: Run Snyk SCA scan and generate SARIF
-        id: snyk-sca
-        run: |
-          snyk test --file=requirements.txt --sarif-file-output=snyk-sca.sarif --severity-threshold=high
-        env:
-          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
-        continue-on-error: true  # allow SARIF generation even if vulnerabilities are found
-
-      - name: Monitor project in Snyk for visibility
-        run: snyk monitor --file=requirements.txt
-        env:
-          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
-
+      # Step 6: Upload SARIF result to GitHub Code Scanning
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: snyk-sca.sarif
+          sarif_file: snyk.sarif
+
+      # Step 7: Fail the pipeline if issues found
+      - name: Fail if Snyk found high or critical issues
+        if: steps.snyk-scan.outcome == 'failure'
+        run: |
+          echo "High or critical vulnerabilities found by Snyk. Failing the workflow."
+          exit 1
+
+
 
       - name: Fail build if High/Critical vulnerabilities were found
         if: steps.snyk-sca.outcome == 'failure'

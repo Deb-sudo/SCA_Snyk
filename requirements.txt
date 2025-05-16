@@ -1,0 +1,7 @@
+pyyaml==5.1           # CVE-2017-18342 (High) - Arbitrary code execution
+Django==2.1.5         # CVE-2020-7471 (High) - SQL injection
+Flask==0.12           # CVE-2018-1000656 (High) - Debug mode RCE
+requests==2.19.1      # CVE-2018-18074 (High) - Information leak via redirects
+jinja2==2.10          # CVE-2019-10906 (High) - Sandbox escape
+Werkzeug==0.14.1      # CVE-2019-1010083 (High) - Arbitrary code execution in debugger
+urllib3==1.24.1       # CVE-2019-11324 (High) - CRLF injection

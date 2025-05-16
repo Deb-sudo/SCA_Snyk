@@ -2,9 +2,17 @@ name: Python SCA Scan with Snyk
 
 on: push
 
+permissions: 
+  contents: read
+  security-events: write  # 👈 REQUIRED for uploading SARIF
+
 jobs:
   security:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # 👈 REQUIRED here too
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,14 +35,12 @@ jobs:
 
       - name: Run Snyk test and generate SARIF
         continue-on-error: true
-        run: |
-          snyk test --sarif-file-output=snyk.sarif --severity-threshold=high --fail-on=all
+        run: snyk test --sarif-file-output=snyk.sarif --severity-threshold=high --fail-on=all
         env:
           SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
 
       - name: Push results to Snyk portal
-        run: |
-          snyk monitor --all-projects
+        run: snyk monitor --all-projects
         env:
           SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
 
@@ -48,3 +54,5 @@ jobs:
         run: |
           echo "High or critical vulnerabilities found."
           exit 1
+
+

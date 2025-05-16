@@ -51,7 +51,57 @@ jobs:
           exit 1
 
 
-
       - name: Fail build if High/Critical vulnerabilities were found
         if: steps.snyk-sca.outcome == 'failure'
         run: exit 1
+
+
+name: Python SCA Scan with Snyk
+
+on: push
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Install Snyk CLI
+        run: |
+          curl -sL https://snyk.io/install | bash
+          echo "$HOME/.snyk" >> $GITHUB_PATH  # Ensure the Snyk CLI is available in $PATH
+
+      - name: Run Snyk test and generate SARIF
+        continue-on-error: true
+        run: |
+          ~/.snyk/snyk test --sarif-file-output=snyk.sarif --severity-threshold=high --fail-on=all
+        env:
+          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
+          
+      - name: Push results to Snyk portal
+        run: |
+          ~/.snyk/snyk monitor --all-projects
+        env:
+          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif
+
+      - name: Fail if high/critical vulnerabilities found
+        if: failure()
+        run: |
+          echo "High or critical vulnerabilities found."
+          exit 1

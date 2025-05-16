@@ -21,19 +21,20 @@ jobs:
 
       - name: Install Snyk CLI
         run: |
-          curl -sL https://snyk.io/install | bash
-          echo "$HOME/.snyk" >> $GITHUB_PATH  # Ensure the Snyk CLI is available in $PATH
+          curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
+          chmod +x snyk
+          sudo mv snyk /usr/local/bin/
 
       - name: Run Snyk test and generate SARIF
         continue-on-error: true
         run: |
-          ~/.snyk/snyk test --sarif-file-output=snyk.sarif --severity-threshold=high --fail-on=all
+          snyk test --sarif-file-output=snyk.sarif --severity-threshold=high --fail-on=all
         env:
           SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
-          
+
       - name: Push results to Snyk portal
         run: |
-          ~/.snyk/snyk monitor --all-projects
+          snyk monitor --all-projects
         env:
           SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
 

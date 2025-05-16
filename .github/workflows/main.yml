@@ -1,6 +1,10 @@
 name: Python SCA Scan with Snyk
 
-on: push
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
 
 permissions:
   contents: read
@@ -52,5 +56,3 @@ jobs:
           snyk test --severity-threshold=high --fail-on=all
         env:
           SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
-
-          

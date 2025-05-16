@@ -1,4 +1,3 @@
-requests==2.25.1  # High vulnerability
 beautifulsoup4==4.9.3  # High vulnerability
 cryptography==3.3.2  # High vulnerability
 urllib3==1.26.5  # High vulnerability

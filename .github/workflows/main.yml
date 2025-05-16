@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   snyk-sca:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       security-events: write
@@ -36,26 +36,26 @@ jobs:
       - name: Set up Snyk CLI
         uses: snyk/actions/setup@master
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
 
       - name: Run Snyk SCA scan and generate SARIF
         id: snyk-sca
         run: |
           snyk test --file=requirements.txt --sarif-file-output=snyk-sca.sarif --severity-threshold=high
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true  # Allow SARIF generation even if vulnerabilities are found
+          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
+        continue-on-error: true  # allow SARIF generation even if vulnerabilities are found
 
       - name: Monitor project in Snyk for visibility
         run: snyk monitor --file=requirements.txt
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: a1eb8b76-9f7f-4ff8-8fcb-e951abcdfa23
 
-      - name: Upload SARIF to GitHub Security tab
+      - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-sca.sarif
 
-      - name: Fail if high/critical vulnerabilities were found
+      - name: Fail build if High/Critical vulnerabilities were found
         if: steps.snyk-sca.outcome == 'failure'
         run: exit 1
